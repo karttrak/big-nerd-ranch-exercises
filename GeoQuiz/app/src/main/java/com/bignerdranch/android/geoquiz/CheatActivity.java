@@ -2,6 +2,7 @@ package com.bignerdranch.android.geoquiz;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -15,10 +16,14 @@ public class CheatActivity extends AppCompatActivity {
     private static final String EXTRA_ANSWER_SHOWN =
             "com.bignerdranch.android.answer_shown";
 
+    private static final String KEY_CHEATED = "kCheated";
+
     private boolean mAnswerIsTrue;
+    private boolean mUserDidCheat;
 
     private TextView mAnswerTextView;
     private Button mShowAnswer;
+    private TextView mApiLevelTextView;
 
     public static Intent newIntent(Context packageContext, boolean answerIsTrue) {
         Intent i = new Intent(packageContext, CheatActivity.class);
@@ -49,13 +54,32 @@ public class CheatActivity extends AppCompatActivity {
         mShowAnswer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mAnswerIsTrue) {
-                    mAnswerTextView.setText(R.string.true_button);
-                } else {
-                    mAnswerTextView.setText(R.string.false_button);
-                }
+                mAnswerTextView.setText(getTextForBoolean(mAnswerIsTrue));
+                mUserDidCheat = true;
                 setAnswerShowResult(true);
             }
         });
+
+        mApiLevelTextView = (TextView) findViewById(R.id.api_level);
+        mApiLevelTextView.setText("API level " + Build.VERSION.SDK_INT);
+
+        if (savedInstanceState != null) {
+            mUserDidCheat = savedInstanceState.getBoolean(KEY_CHEATED, false);
+            if (mUserDidCheat) {
+                mAnswerTextView.setText(getTextForBoolean(mAnswerIsTrue));
+            }
+        }
+
+        setAnswerShowResult(mUserDidCheat);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putBoolean(KEY_CHEATED, mUserDidCheat);
+    }
+
+    private String getTextForBoolean(boolean answer) {
+        return answer ? "True" : "False";
     }
 }

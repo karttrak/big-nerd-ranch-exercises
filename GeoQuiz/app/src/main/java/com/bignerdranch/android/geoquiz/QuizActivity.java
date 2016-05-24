@@ -7,20 +7,22 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class QuizActivity extends AppCompatActivity {
 
     private static final String TAG = "QuizActivity";
-    private static final String KEY_INDEX = "index";
+    private static final String KEY_INDEX = "kIndex";
+    private static final String KEY_CHEATED = "kCheated";
     private static final int REQUEST_CODE_CHEAT = 0;
 
     private TextView mQuestionNumberText;
     private Button mTrueButton;
     private Button mFalseButton;
-    private Button mPrevButton;
-    private Button mNextButton;
+    private ImageButton mPrevButton;
+    private ImageButton mNextButton;
     private Button mCheatButton;
     private TextView mQuestionTextView;
 
@@ -33,13 +35,11 @@ public class QuizActivity extends AppCompatActivity {
     };
 
     private int mCurrentIndex = 0;
-    private boolean mIsCheater;
 
     private void updateQuestion() {
         int question = mQuestionBank[mCurrentIndex].getTextResId();
         mQuestionTextView.setText(question);
         mQuestionNumberText.setText("Question ".concat(String.valueOf(mCurrentIndex + 1)));
-        mIsCheater = false;
     }
 
     private void checkAnswer(boolean userPressedTrue) {
@@ -92,7 +92,7 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
-        mNextButton = (Button) findViewById(R.id.next_button);
+        mNextButton = (ImageButton) findViewById(R.id.next_button);
         mNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,7 +101,7 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
-        mPrevButton = (Button) findViewById(R.id.prev_button);
+        mPrevButton = (ImageButton) findViewById(R.id.prev_button);
         mPrevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -125,6 +125,11 @@ public class QuizActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+
+            boolean[] cheatedQuestions = savedInstanceState.getBooleanArray(KEY_CHEATED);
+            for (int i = 0; i < mQuestionBank.length; i++) {
+                mQuestionBank[i].setUserCheated(cheatedQuestions[i]);
+            }
         }
 
         updateQuestion();
@@ -141,7 +146,6 @@ public class QuizActivity extends AppCompatActivity {
                 return;
             }
             mQuestionBank[mCurrentIndex].setUserCheated(CheatActivity.wasAnswerShown(data));
-            mIsCheater = CheatActivity.wasAnswerShown(data);
         }
     }
 
@@ -150,6 +154,12 @@ public class QuizActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "Saving instance state");
         savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+
+        boolean[] cheatedQuestions = new boolean[mQuestionBank.length];
+        for (int i = 0; i < mQuestionBank.length; i++) {
+            cheatedQuestions[i] = mQuestionBank[i].isUserCheated();
+        }
+        savedInstanceState.putBooleanArray(KEY_CHEATED, cheatedQuestions);
     }
 
     @Override
